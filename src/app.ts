@@ -3,7 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
 import taskRoutes from "./routes/task.routes";
-
+import voiceRoutes from "./routes/voice.routes";
 import 'dotenv/config';
 
 const app = express();
@@ -29,6 +29,6 @@ app.use(morgan("dev"));
 app.get("/health", (_req, res) => res.json({ status: "ok", ts: new Date() }));
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
-
+app.use("/api/voice", voiceRoutes);
 
 export default app;
