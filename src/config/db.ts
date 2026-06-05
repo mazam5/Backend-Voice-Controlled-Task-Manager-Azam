@@ -1,19 +1,26 @@
 import { Pool } from "pg";
-import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-
-dotenv.config();
+import "./env";
 
 export let isPostgresConnected = false;
 
-export const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME || "mydb",
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASSWORD || "password",
-});
+export const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes("localhost") || process.env.DATABASE_URL.includes("127.0.0.1")
+        ? false
+        : { rejectUnauthorized: false }
+    }
+    : {
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT) || 5432,
+      database: process.env.DB_NAME || "mydb",
+      user: process.env.DB_USER || "postgres",
+      password: process.env.DB_PASSWORD || "password",
+    }
+);
 
 // JSON fallback file path
 export const JSON_DB_DIR = path.join(__dirname, "../../data");
@@ -91,7 +98,7 @@ const initPostgresTables = async () => {
     `);
 
     if (
-      columnTypeResult.rows.length > 0 && 
+      columnTypeResult.rows.length > 0 &&
       columnTypeResult.rows[0].data_type !== 'timestamp with time zone'
     ) {
       console.log("Altering tasks.scheduled_at to TIMESTAMPTZ...");

@@ -4,7 +4,7 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
 import taskRoutes from "./routes/task.routes";
 import voiceRoutes from "./routes/voice.routes";
-import 'dotenv/config';
+import "./config/env";
 
 const app = express();
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
@@ -24,7 +24,11 @@ app.use(cors({
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-app.use(morgan("dev"));
+if (process.env.NODE_ENV === "production") {
+  app.use(morgan("combined"));
+} else {
+  app.use(morgan("dev"));
+}
 
 app.get("/health", (_req, res) => res.json({ status: "ok", ts: new Date() }));
 app.use("/api/auth", authRoutes);

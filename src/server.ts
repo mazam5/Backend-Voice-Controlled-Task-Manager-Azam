@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
+import "./config/env";
 
 import http from "http";
 import app from "./app";
@@ -18,14 +17,16 @@ initWebSocket(server);
 connectDB()
   .then(() => {
     server.listen(PORT, () => {
-      console.log(`🚀 Auralist API  →  http://localhost:${PORT}`);
-      console.log(`🔌 WebSocket    →  ws://localhost:${PORT}/ws`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`🚀 Auralist API  →  http://localhost:${PORT}`);
+        console.log(`🔌 WebSocket    →  ws://localhost:${PORT}/ws`);
+      }
       if (!process.env.GEMINI_API_KEY) {
         console.warn("⚠️  GEMINI_API_KEY not set — voice agent will not work!");
       }
     });
   })
-  .catch((err) => {
+  .catch((err: any) => {
     console.error("❌ DB connection failed:", err);
     process.exit(1);
   });
