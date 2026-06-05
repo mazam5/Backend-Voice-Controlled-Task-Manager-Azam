@@ -69,8 +69,39 @@ const initPostgresTables = async () => {
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log("users table created");
-    
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        scheduled_at TIMESTAMPTZ NOT NULL,
+        completed BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Migrate existing table's column to TIMESTAMPTZ only if it is currently TIMESTAMP without timezone
+    const columnTypeResult = await pool.query(`
+      SELECT data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'tasks' AND column_name = 'scheduled_at';
+    `);
+
+    if (
+      columnTypeResult.rows.length > 0 && 
+      columnTypeResult.rows[0].data_type !== 'timestamp with time zone'
+    ) {
+      console.log("Altering tasks.scheduled_at to TIMESTAMPTZ...");
+      await pool.query(`
+        ALTER TABLE tasks ALTER COLUMN scheduled_at TYPE TIMESTAMPTZ;
+      `);
+      console.log("PostgreSQL table altered and migrated to TIMESTAMPTZ successfully.");
+    } else {
+      console.log("PostgreSQL tables checked and verified.");
+    }
   } catch (err: any) {
     console.error("Failed to initialize PostgreSQL tables:", err.message);
     isPostgresConnected = false;
