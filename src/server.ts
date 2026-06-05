@@ -1,14 +1,23 @@
-import dotenv from 'dotenv';
-import app from './app';
+import http from "http";
+import app from "./app";
+import { connectDB } from "./config/db";
 
-dotenv.config();
+import 'dotenv/config';
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
+const JWT_SECRET = process.env.JWT_SECRET || "auralist_dev";
 
-const startServer = async () => {
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// ─── HTTP server wrapping Express ─────────────────────────────────────────────
+const server = http.createServer(app);
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+connectDB()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`🚀 Auralist API  →  http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ DB connection failed:", err);
+    process.exit(1);
   });
-};
-
-startServer();
