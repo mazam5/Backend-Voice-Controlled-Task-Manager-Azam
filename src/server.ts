@@ -1,20 +1,28 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import http from "http";
 import app from "./app";
 import { connectDB } from "./config/db";
-
-import 'dotenv/config';
+import { initWebSocket } from "./config/websocket";
 
 const PORT = Number(process.env.PORT) || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || "auralist_dev";
 
-// ─── HTTP server wrapping Express ─────────────────────────────────────────────
+// Wraps Express app inside http server
 const server = http.createServer(app);
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+// Initializes WebSocket server on top of HTTP server
+initWebSocket(server);
+
+// Connects to Database and starts listening for requests
 connectDB()
   .then(() => {
     server.listen(PORT, () => {
       console.log(`🚀 Auralist API  →  http://localhost:${PORT}`);
+      console.log(`🔌 WebSocket    →  ws://localhost:${PORT}/ws`);
+      if (!process.env.GEMINI_API_KEY) {
+        console.warn("⚠️  GEMINI_API_KEY not set — voice agent will not work!");
+      }
     });
   })
   .catch((err) => {
