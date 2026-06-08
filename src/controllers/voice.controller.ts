@@ -31,7 +31,6 @@ export const voiceChat = async (req: AuthRequest, res: Response): Promise<void> 
       res.json({
         transcript: "",
         textResponse: "I couldn't hear anything. Please try speaking again.",
-        tasks: [],
       });
       return;
     }

@@ -4,6 +4,7 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
 import taskRoutes from "./routes/task.routes";
 import voiceRoutes from "./routes/voice.routes";
+import dbRoutes from "./routes/db.routes";
 import "./config/env";
 
 const app = express();
@@ -35,5 +36,6 @@ app.get("/health", (_req, res) => res.json({ status: "ok", ts: new Date() }));
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/voice", voiceRoutes);
+app.use("/api/db", dbRoutes);
 
 export default app;

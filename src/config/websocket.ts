@@ -5,6 +5,9 @@ import { processGeminiVoiceAgent, clearSession } from "../services/gemini.servic
 
 const JWT_SECRET = process.env.JWT_SECRET || "auralist_dev_secret_change_me";
 
+// Set to track users currently processing a voice agent request
+const activeProcessingUsers = new Set<number>();
+
 export interface AuraSocket extends WebSocket {
   userId?: number;
   isAlive: boolean;
@@ -91,11 +94,19 @@ export const initWebSocket = (server: http.Server) => {
           return;
         }
 
+        // Avoid parallel/concurrent requests for the same user session
+        if (activeProcessingUsers.has(ws.userId)) {
+          console.log(`⚠️ User ${ws.userId} is already processing a request. Skipping transcript: "${text}"`);
+          return;
+        }
+
+        activeProcessingUsers.add(ws.userId);
         console.log(`📩 Transcript from User ${ws.userId}: "${text}"`);
 
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
           send({ type: "error", message: "Gemini API key not configured on server" });
+          activeProcessingUsers.delete(ws.userId);
           return;
         }
 
@@ -115,6 +126,8 @@ export const initWebSocket = (server: http.Server) => {
         } catch (err: any) {
           console.error(`❌ Agent error for User ${ws.userId}:`, err.message);
           send({ type: "error", message: `Agent error: ${err.message}` });
+        } finally {
+          activeProcessingUsers.delete(ws.userId);
         }
         return;
       }

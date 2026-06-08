@@ -23,7 +23,7 @@ export const clearSession = (userId: number): void => {
   sessions[userId] = [];
 };
 
-// ─── System prompt ────────────────────────────────────────────────────────────
+// ── System prompt ────────────────────────────────────────────────────────────
 const buildSystemPrompt = (tasks: Task[]): string => {
   const now = new Date();
   const timeStr = now.toLocaleString("en-US", {
@@ -39,7 +39,8 @@ const buildSystemPrompt = (tasks: Task[]): string => {
         weekday: "short", month: "short", day: "numeric",
         hour: "numeric", minute: "2-digit",
       });
-      return `  • [ID:${t.id}] "${t.title}" — ${label} (completed: ${t.completed})`;
+      const isOverdue = !t.completed && d.getTime() < now.getTime();
+      return `  • [ID:${t.id}] "${t.title}" — ${label} (completed: ${t.completed}${isOverdue ? ", status: OVERDUE/MISSED" : ""})`;
     }).join("\n");
 
   return `You are Auralist, a friendly conversational AI voice assistant for a Voice-Controlled Task Manager.
@@ -75,7 +76,9 @@ ${taskList}
 
 8. AGENDA SUMMARY: Speak conversationally. Example: "You have a product sync at 10 AM and a LinkedIn post at 5 PM this evening."
 
-9. GRACEFUL ERROR HANDLING: If a tool returns an error, acknowledge it naturally and offer to retry.`;
+9. GRACEFUL ERROR HANDLING: If a tool returns an error, acknowledge it naturally and offer to retry.
+
+10. OVERDUE/MISSED TASKS: If an uncompleted task's time has already passed (marked with "status: OVERDUE/MISSED"), refer to it as "overdue" or "missed". If the user asks about their tasks or agenda, mention these overdue tasks and ask if they'd like to reschedule or mark them complete.`;
 };
 
 // ─── Tool declarations ────────────────────────────────────────────────────────
@@ -138,8 +141,8 @@ async function callGemini(
   history: GeminiContent[],
   systemPrompt: string
 ): Promise<any> {
-  // Try models in order of preference
-  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-flash-latest"];
+  // Try models in order of preference (cheapest first)
+  const models = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-3.5-flash", "gemini-flash-latest"];
 
   for (const model of models) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -306,8 +309,8 @@ export const transcribeAudio = async (
 
   const base64Audio = audioBuffer.toString('base64');
   
-  // Use preferred or fallback models for multimodal audio
-  const models = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-flash-latest"];
+  // Use preferred or fallback models for multimodal audio (cheapest first)
+  const models = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-3.5-flash", "gemini-flash-latest"];
   
   for (const model of models) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
